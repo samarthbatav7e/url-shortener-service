@@ -6,9 +6,9 @@ import com.lld.urlshortnerservice.url.strategy.generator.ShortCodeGenerator;
 public class SequentialGenerator implements ShortCodeGenerator {
 
     @Override
-    public String generate()
+    public String generate(long id)
     {
-        return null;
+        return String.valueOf(id);
     }
     @Override
     public CodeGenerationStrategy getStrategy()
