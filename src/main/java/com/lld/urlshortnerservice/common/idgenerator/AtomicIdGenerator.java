@@ -1,4 +1,4 @@
-package com.lld.urlshortnerservice.url.common;
+package com.lld.urlshortnerservice.common.idgenerator;
 
 import java.util.concurrent.atomic.AtomicLong;
 

@@ -1,4 +1,4 @@
-package com.lld.urlshortnerservice.url.common;
+package com.lld.urlshortnerservice.common;
 
 public interface IdGenerator {
     long generateId();
