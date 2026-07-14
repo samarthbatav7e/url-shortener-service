@@ -7,7 +7,7 @@ public class AtomicIdGenerator implements IdGenerator{
 
     public AtomicIdGenerator()
     {
-        this.counter=new AtomicLong();
+        this.counter=new AtomicLong(1);
     }
     @Override
     public long generateId()
