@@ -3,7 +3,9 @@ package com.lld.urlshortnerservice.url.service;
 import com.lld.urlshortnerservice.common.excpetions.ResourceNotFoundException;
 import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import com.lld.urlshortnerservice.url.repository.UrlMappingRepository;
+import org.springframework.stereotype.Service;
 
+@Service
 public class UrlRedirectService {
     private final UrlMappingRepository repository;
 

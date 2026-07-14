@@ -7,10 +7,12 @@ import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import com.lld.urlshortnerservice.url.repository.UrlMappingRepository;
 import com.lld.urlshortnerservice.url.strategy.factory.ShortCodeGeneratorFactory;
 import com.lld.urlshortnerservice.url.strategy.generator.ShortCodeGenerator;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+@Service
 public class UrlCreationService {
     private final UrlMappingRepository repository;
     private final IdGenerator idGenerator;

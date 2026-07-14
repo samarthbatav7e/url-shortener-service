@@ -2,12 +2,15 @@ package com.lld.urlshortnerservice.url.strategy.factory;
 
 import com.lld.urlshortnerservice.common.enums.CodeGenerationStrategy;
 import com.lld.urlshortnerservice.url.strategy.generator.ShortCodeGenerator;
+import org.springframework.stereotype.Component;
 
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+@Component
 public class ShortCodeGeneratorFactory {
+
     private final Map<CodeGenerationStrategy, ShortCodeGenerator> generators=
             new EnumMap<>(CodeGenerationStrategy.class);
 
