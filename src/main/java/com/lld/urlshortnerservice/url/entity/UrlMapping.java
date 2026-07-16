@@ -2,16 +2,35 @@ package com.lld.urlshortnerservice.url.entity;
 
 import com.lld.urlshortnerservice.common.enums.CodeGenerationStrategy;
 import com.lld.urlshortnerservice.url.strategy.generator.ShortCodeGenerator;
+import jakarta.persistence.*;
+import org.springframework.data.annotation.CreatedDate;
+
 
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+@Entity
+@Table(name="url_mapping")
+
 public class UrlMapping {
+    @Id
+    @Column(name="id")
     private long id;
+
+    @Column(name="long_url", nullable = false,length=2048)
     private String longUrl;
+
+    @Column(name="short_code", nullable = false, unique = true, length = 20)
     private String shortCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name="generation_strategy")
     private CodeGenerationStrategy generationStrategy;
+
+    @Column(name="created_at")
     private LocalDateTime createdAt;
+
+    @Column(name="expires_at")
     private LocalDateTime expiresAt;
 
    public UrlMapping()
