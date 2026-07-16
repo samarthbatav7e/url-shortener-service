@@ -1,0 +1,42 @@
+package com.lld.urlshortnerservice.url.repository;
+
+import com.lld.urlshortnerservice.url.entity.UrlMapping;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public class JpaUrlMappingRepositoryAdapter implements  UrlMappingRepository{
+    private final JpaUrlMappingRepository jpaRepository;
+
+    public JpaUrlMappingRepositoryAdapter(JpaUrlMappingRepository repository)
+    {
+        this.jpaRepository=repository;
+    }
+    @Override
+    public UrlMapping save(UrlMapping urlMapping)
+    {
+        return jpaRepository.save(urlMapping);
+    }
+    @Override
+    public Optional<UrlMapping>findByLongUrl(String longUrl)
+    {
+        return jpaRepository.findByLongUrl(longUrl);
+    }
+    @Override
+    public Optional<UrlMapping>findByShortCode(String shortCode)
+    {
+        return jpaRepository.findByShortCode(shortCode);
+    }
+    @Override
+    public boolean existsByShortCode(String shortCode)
+    {
+        return jpaRepository.existsByShortCode(shortCode);
+    }
+    @Override
+    public boolean existsByLongUrl(String longUrl)
+    {
+        return jpaRepository.existsByLongUrl(longUrl);
+    }
+}
