@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface UrlMappingRepository extends JpaRepository<UrlMapping,Long> {
+public interface UrlMappingRepository {
 
     UrlMapping save(UrlMapping urlMapping);
     Optional<UrlMapping>findByLongUrl(String longUrl);
