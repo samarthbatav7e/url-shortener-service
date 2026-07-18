@@ -3,6 +3,8 @@ package com.lld.urlshortnerservice.url.controller;
 import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import com.lld.urlshortnerservice.url.mapper.UrlMapper;
 import com.lld.urlshortnerservice.url.service.UrlRedirectService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import java.net.URI;
 
 @RestController
 public class RedirectController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedirectController.class);
 
     private final UrlRedirectService redirectService;
 
@@ -26,6 +29,8 @@ public class RedirectController {
     @GetMapping("/{shortCode}")
     public ResponseEntity<Void> redirect(@PathVariable String shortCode)
     {
+        LOGGER.info("GET/ {}", shortCode);
+
         UrlMapping mapping=redirectService.resolve(shortCode);
 
         HttpHeaders headers=new HttpHeaders();

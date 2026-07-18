@@ -1,11 +1,17 @@
 package com.lld.urlshortnerservice.url.dto;
 
 import com.lld.urlshortnerservice.common.enums.CodeGenerationStrategy;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 
 import java.util.Objects;
 
 public class CreateUrlRequest {
+    @NotBlank
     String longUrl;
+
+    @NotNull
     private CodeGenerationStrategy generationStrategy;
 
     public CreateUrlRequest()

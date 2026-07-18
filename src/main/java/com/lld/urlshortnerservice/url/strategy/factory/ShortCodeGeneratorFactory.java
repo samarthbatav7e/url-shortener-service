@@ -2,6 +2,8 @@ package com.lld.urlshortnerservice.url.strategy.factory;
 
 import com.lld.urlshortnerservice.common.enums.CodeGenerationStrategy;
 import com.lld.urlshortnerservice.url.strategy.generator.ShortCodeGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumMap;
@@ -10,6 +12,7 @@ import java.util.Map;
 
 @Component
 public class ShortCodeGeneratorFactory {
+    private  static final Logger LOGGER= LoggerFactory.getLogger(ShortCodeGeneratorFactory.class);
 
     private final Map<CodeGenerationStrategy, ShortCodeGenerator> generators=
             new EnumMap<>(CodeGenerationStrategy.class);
@@ -29,6 +32,7 @@ public class ShortCodeGeneratorFactory {
         {
             throw new IllegalArgumentException("No generator found for strategy " + strategy);
         }
+        LOGGER.debug("Using {} generator", strategy);
         return shortCodeGenerator;
     }
 

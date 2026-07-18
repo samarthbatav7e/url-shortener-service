@@ -7,9 +7,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class UrlMapper {
-    @Value("${app.base-url:http://localhost:8080}")
 
+    @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
+
     public CreateUrlResponse toResponse(UrlMapping mapping)
     {
         return new CreateUrlResponse(
