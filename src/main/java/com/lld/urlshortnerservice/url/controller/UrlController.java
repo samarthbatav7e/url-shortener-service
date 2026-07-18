@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("api/v1/urls")
+@RequestMapping("/api/v1/urls")
 public class UrlController {
 
     private static final Logger LOGGER= LoggerFactory.getLogger(UrlController.class);

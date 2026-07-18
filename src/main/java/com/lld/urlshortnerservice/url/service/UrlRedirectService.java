@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class UrlRedirectService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UrlRedirectService.class);
@@ -25,11 +27,16 @@ public class UrlRedirectService {
         {
             throw new IllegalArgumentException("Short code cannot be null or blank.");
         }
+        Optional<UrlMapping> mapping = repository.findByShortCode(shortCode);
 
-        LOGGER.info("Redirecting {} to {}", shortCode, repository.findByShortCode(shortCode));
-        return repository.findByShortCode(shortCode)
-                .orElseThrow(()-> new ResourceNotFoundException(
-                        "No URL found for short code" + shortCode
+        LOGGER.info(
+                "Redirecting {} to {}",
+                shortCode,
+                mapping.map(UrlMapping::getLongUrl).orElse("NOT_FOUND")
+        );
+        return  mapping.orElseThrow(
+                () -> new ResourceNotFoundException(
+                        "No URL found for short code " + shortCode
                 ));
     }
 }

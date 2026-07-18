@@ -29,7 +29,7 @@ public class RedirectController {
     @GetMapping("/{shortCode}")
     public ResponseEntity<Void> redirect(@PathVariable String shortCode)
     {
-        LOGGER.info("GET/ {}", shortCode);
+        LOGGER.info("Received redirect request for short code {}", shortCode);
 
         UrlMapping mapping=redirectService.resolve(shortCode);
 
