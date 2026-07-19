@@ -1,5 +1,6 @@
 package com.lld.urlshortnerservice.url.service;
 
+import com.lld.urlshortnerservice.cache.service.UrlCacheService;
 import com.lld.urlshortnerservice.common.enums.CodeGenerationStrategy;
 import com.lld.urlshortnerservice.common.idgenerator.IdGenerator;
 import com.lld.urlshortnerservice.url.dto.CreateUrlRequest;
@@ -47,6 +48,9 @@ class UrlCreationServiceTest {
 
     private CreateUrlRequest request;
 
+    @Mock
+    private UrlCacheService cacheService;
+
     @BeforeEach
     void setUp() {
 
@@ -71,6 +75,8 @@ class UrlCreationServiceTest {
 
         when(generator.generate(1L))
                 .thenReturn("1");
+        when(repository.save(any(UrlMapping.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         UrlMapping result =
                 creationService.createShortUrl(request);
@@ -100,6 +106,8 @@ class UrlCreationServiceTest {
 
         verify(generator)
                 .generate(1L);
+        verify(cacheService)
+                .cacheUrlMapping(any(UrlMapping.class));
     }
 
     @Test
@@ -133,6 +141,9 @@ class UrlCreationServiceTest {
 
         verify(generator, never())
                 .generate(anyLong());
+
+        verify(cacheService, never())
+                .cacheUrlMapping(any());
     }
 
     @Test
@@ -213,6 +224,8 @@ class UrlCreationServiceTest {
 
         when(generator.generate(anyLong()))
                 .thenReturn("XYZ99");
+        when(repository.save(any(UrlMapping.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         creationService.createShortUrl(request);
 
@@ -259,6 +272,8 @@ class UrlCreationServiceTest {
 
         when(generator.generate(anyLong()))
                 .thenReturn("7");
+        when(repository.save(any(UrlMapping.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         creationService.createShortUrl(request);
 
@@ -281,6 +296,8 @@ class UrlCreationServiceTest {
 
         when(generator.generate(anyLong()))
                 .thenReturn("F");
+        when(repository.save(any(UrlMapping.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         creationService.createShortUrl(request);
 
@@ -303,6 +320,8 @@ class UrlCreationServiceTest {
 
         when(generator.generate(anyLong()))
                 .thenReturn("1");
+        when(repository.save(any(UrlMapping.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         creationService.createShortUrl(request);
 
