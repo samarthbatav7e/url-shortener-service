@@ -1,6 +1,7 @@
 package com.lld.urlshortnerservice.url.controller;
 
 import com.lld.urlshortnerservice.common.enums.CodeGenerationStrategy;
+import com.lld.urlshortnerservice.common.excpetions.GlobalExceptionHandler;
 import com.lld.urlshortnerservice.common.excpetions.ResourceNotFoundException;
 import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import com.lld.urlshortnerservice.url.service.UrlRedirectService;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,6 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(RedirectController.class)
+@Import(GlobalExceptionHandler.class)
 class RedirectControllerTest {
 
     @Autowired
@@ -137,24 +140,27 @@ class RedirectControllerTest {
         verify(redirectService)
                 .resolve(eq("oracle"));
     }
-    @Disabled
+
     @Test
     @DisplayName("Should propagate ResourceNotFoundException")
     void shouldThrowResourceNotFoundException() throws Exception {
 
-        when(redirectService.resolve("missing"))
-                .thenThrow(
-                        new ResourceNotFoundException(
-                                "No URL found for short code missing"
-                        )
-                );
+        String shortCode = "abc123";
 
-        mockMvc.perform(get("/missing"))
+        when(redirectService.resolve(shortCode))
+                .thenThrow(new ResourceNotFoundException(
+                        "No URL found for short code " + shortCode));
 
-                .andExpect(status().isInternalServerError());
+        mockMvc.perform(get("/" + shortCode))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message")
+                        .value("No URL found for short code abc123"))
+                .andExpect(jsonPath("$.path")
+                        .value("/abc123"));
 
-        verify(redirectService)
-                .resolve("missing");
+        verify(redirectService).resolve(shortCode);
     }
 
     @Test

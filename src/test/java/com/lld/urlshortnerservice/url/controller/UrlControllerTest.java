@@ -2,6 +2,7 @@ package com.lld.urlshortnerservice.url.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lld.urlshortnerservice.common.enums.CodeGenerationStrategy;
+import com.lld.urlshortnerservice.common.excpetions.GlobalExceptionHandler;
 import com.lld.urlshortnerservice.url.dto.CreateUrlRequest;
 import com.lld.urlshortnerservice.url.dto.CreateUrlResponse;
 import com.lld.urlshortnerservice.url.entity.UrlMapping;
@@ -14,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import org.springframework.http.MediaType;
@@ -31,6 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UrlController.class)
+@Import(GlobalExceptionHandler.class)
 class UrlControllerTest {
 
     @Autowired
@@ -250,5 +253,82 @@ class UrlControllerTest {
 
         verify(urlMapper, times(1))
                 .toResponse(mapping);
+    }
+
+    @Test
+    void shouldReturn400WhenLongUrlIsBlank() throws Exception {
+
+        CreateUrlRequest request =
+                new CreateUrlRequest("", CodeGenerationStrategy.BASE62);
+
+        mockMvc.perform(post("/api/v1/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Validation failed"))
+                .andExpect(jsonPath(
+                        "$.validationErrors.longUrl")
+                        .value("Long URL is required."));
+
+        verifyNoInteractions(creationService);
+    }
+    @Test
+    void shouldReturn400WhenGenerationStrategyIsMissing() throws Exception {
+
+        CreateUrlRequest request =
+                new CreateUrlRequest("https://google.com", null);
+
+        mockMvc.perform(post("/api/v1/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath(
+                        "$.validationErrors.generationStrategy")
+                        .value("Generation Strategy is required."));
+
+        verifyNoInteractions(creationService);
+    }
+    @Test
+    void shouldReturn400WhenRequestBodyIsEmpty() throws Exception {
+
+        mockMvc.perform(post("/api/v1/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath(
+                        "$.validationErrors.longUrl")
+                        .value("Long URL is required."))
+                .andExpect(jsonPath(
+                        "$.validationErrors.generationStrategy")
+                        .value("Generation Strategy is required."));
+
+        verifyNoInteractions(creationService);
+    }
+    @Test
+    void shouldReturn400WhenLongUrlIsNull() throws Exception {
+
+        CreateUrlRequest request =
+                new CreateUrlRequest(null,
+                        CodeGenerationStrategy.BASE62);
+
+        mockMvc.perform(post("/api/v1/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(creationService);
+    }
+    @Test
+    void shouldReturn400WhenRequestBodyIsMissing() throws Exception {
+
+        mockMvc.perform(post("/api/v1/urls")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(creationService);
     }
 }
