@@ -1,8 +1,8 @@
 package com.lld.urlshortnerservice.url.service;
 
+import com.lld.urlshortnerservice.cache.service.UrlCacheService;
 import com.lld.urlshortnerservice.common.idgenerator.IdGenerator;
 import com.lld.urlshortnerservice.url.dto.CreateUrlRequest;
-import com.lld.urlshortnerservice.url.dto.CreateUrlResponse;
 import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import com.lld.urlshortnerservice.url.repository.UrlMappingRepository;
 import com.lld.urlshortnerservice.url.strategy.factory.ShortCodeGeneratorFactory;
@@ -20,12 +20,14 @@ public class UrlCreationService {
     private static final Logger LOGGER= LoggerFactory.getLogger(UrlCreationService.class);
 
     private final UrlMappingRepository repository;
+    private final UrlCacheService cacheService;
     private final IdGenerator idGenerator;
     private final ShortCodeGeneratorFactory shortCodeGeneratorFactory;
 
-    public UrlCreationService(UrlMappingRepository repository, IdGenerator idGenerator, ShortCodeGeneratorFactory shortCodegeneratorFactory)
+    public UrlCreationService(UrlMappingRepository repository, UrlCacheService cacheService, IdGenerator idGenerator, ShortCodeGeneratorFactory shortCodegeneratorFactory)
     {
         this.repository=repository;
+        this.cacheService=cacheService;
         this.idGenerator=idGenerator;
         this.shortCodeGeneratorFactory=shortCodegeneratorFactory;
     }
@@ -90,9 +92,12 @@ public class UrlCreationService {
                         .build();
 
         //persisting the UrlMapping in repository
-        repository.save(urlMapping);
+       UrlMapping savedMapping = repository.save(urlMapping);
+        cacheService.cacheUrlMapping(savedMapping);
 
-        LOGGER.info("Created short URL {} for {}", urlMapping.getShortCode(), urlMapping.getLongUrl());
+        LOGGER.info("Cached mapping for short code {}", savedMapping.getShortCode());
+
+        LOGGER.info("Created short URL {} for {}", savedMapping.getShortCode(), savedMapping.getLongUrl());
 
         //returning the urlMapping
 
