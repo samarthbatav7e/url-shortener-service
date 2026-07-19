@@ -8,10 +8,10 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Objects;
 
 public class CreateUrlRequest {
-    @NotBlank
+    @NotBlank(message= "Long URL is required.")
     String longUrl;
 
-    @NotNull
+    @NotNull(message = "Generation Strategy is required.")
     private CodeGenerationStrategy generationStrategy;
 
     public CreateUrlRequest()
