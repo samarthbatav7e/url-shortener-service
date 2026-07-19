@@ -1,10 +1,12 @@
 package com.lld.urlshortnerservice.cache.repository;
 
+import com.lld.urlshortnerservice.url.entity.UrlMapping;
+
 import java.util.Optional;
 
 public interface UrlCacheRepository {
-    Optional<String> get(String shortCode);
-    void save(String shortCode, String longUrl);
+    Optional<UrlMapping> get(String shortCode);
+    void save(UrlMapping urlMapping);
     void delete(String shortCode);
 
 }

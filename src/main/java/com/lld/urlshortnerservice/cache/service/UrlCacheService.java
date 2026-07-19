@@ -1,6 +1,7 @@
 package com.lld.urlshortnerservice.cache.service;
 
 import com.lld.urlshortnerservice.cache.repository.UrlCacheRepository;
+import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -15,13 +16,13 @@ public class UrlCacheService {
         this.cacheRepository=cacheRepository;
     }
 
-    public Optional<String> getCachedUrl(String shortCode)
+    public Optional<UrlMapping> getCachedUrlMapping(String shortCode)
     {
         return cacheRepository.get(shortCode);
     }
-    public void cacheUrl(String shortCode, String longUrl)
+    public void cacheUrlMapping(UrlMapping urlMapping)
     {
-        cacheRepository.save(shortCode,longUrl);
+        cacheRepository.save(urlMapping);
     }
     public void evict(String shortCode)
     {

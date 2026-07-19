@@ -1,6 +1,7 @@
 package com.lld.urlshortnerservice.cache.adapter;
 
 import com.lld.urlshortnerservice.cache.repository.UrlCacheRepository;
+import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -11,24 +12,27 @@ import java.util.Optional;
 @Repository
 public class RedisUrlCacheAdapter implements UrlCacheRepository {
 
-    private final RedisTemplate<String, String>redisTemplate;
+    private final RedisTemplate<String, UrlMapping>redisTemplate;
     private final Duration ttl;
 
-    public RedisUrlCacheAdapter(RedisTemplate<String,String> redisTemplate, @Value("${url.cache.ttl}") long ttlSeconds)
+    public RedisUrlCacheAdapter(RedisTemplate<String,UrlMapping> redisTemplate, @Value("${url.cache.ttl}") long ttlSeconds)
     {
         this.redisTemplate=redisTemplate;
         this.ttl=Duration.ofSeconds(ttlSeconds);
     }
     @Override
-    public Optional<String> get(String shortCode)
+    public Optional<UrlMapping> get(String shortCode)
     {
         return Optional.ofNullable(redisTemplate.opsForValue().get(shortCode));
     }
 
     @Override
-    public void save(String shortCode, String longUrl)
+    public void save(UrlMapping urlMapping)
     {
-        redisTemplate.opsForValue().set(shortCode, longUrl,ttl);
+        redisTemplate.opsForValue().set(urlMapping.getShortCode(),
+                urlMapping,
+                ttl
+        );
     }
 
     @Override

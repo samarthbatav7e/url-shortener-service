@@ -1,26 +1,26 @@
 package com.lld.urlshortnerservice.cache.config;
 
+import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 public class RedisConfig {
     @Bean
-    public RedisTemplate<String, String>redisTemplate(RedisConnectionFactory connectionFactory)
+    public RedisTemplate<String, UrlMapping>redisTemplate(RedisConnectionFactory connectionFactory)
     {
-        RedisTemplate<String, String> redisTemplate=new RedisTemplate<>();
+        RedisTemplate<String, UrlMapping> redisTemplate=new RedisTemplate<>();
         redisTemplate.setConnectionFactory(connectionFactory);
 
-        StringRedisSerializer serializer=new StringRedisSerializer();
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
 
-        redisTemplate.setKeySerializer(serializer);
-        redisTemplate.setValueSerializer(serializer);
-
-        redisTemplate.setHashKeySerializer(serializer);
-        redisTemplate.setHashValueSerializer(serializer);
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
 
         redisTemplate.afterPropertiesSet();
 
