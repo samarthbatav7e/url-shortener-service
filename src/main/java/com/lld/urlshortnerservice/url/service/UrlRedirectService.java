@@ -2,12 +2,14 @@ package com.lld.urlshortnerservice.url.service;
 
 import com.lld.urlshortnerservice.cache.service.UrlCacheService;
 import com.lld.urlshortnerservice.common.excpetions.ResourceNotFoundException;
+import com.lld.urlshortnerservice.common.excpetions.UrlExpiredException;
 import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import com.lld.urlshortnerservice.url.repository.UrlMappingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -23,6 +25,25 @@ public class UrlRedirectService {
         this.cacheService=cacheService;
     }
 
+    private UrlMapping validateExpiry(UrlMapping urlMapping)
+    {
+        LocalDateTime expiry=urlMapping.getExpiresAt();
+
+        if(expiry!=null && expiry.isBefore(LocalDateTime.now()))
+        {
+            repository.delete(urlMapping);
+            cacheService.evict(urlMapping.getShortCode());
+
+           LOGGER.info(
+                    "Short URL {} has expired. Removing from database and cache.",
+                    urlMapping.getShortCode());
+
+            throw new UrlExpiredException("Short URL " + urlMapping.getShortCode() + "has expired.");
+        }
+
+        return urlMapping;
+    }
+
     public UrlMapping resolve(String shortCode)
     {
          LOGGER.info("Resolving Short Code for  {}", shortCode);
@@ -32,7 +53,7 @@ public class UrlRedirectService {
          if(cachedMapping.isPresent())
          {
              LOGGER.info("Cache hit for Short Code {}", shortCode);
-             return  cachedMapping.get();
+             return  validateExpiry(cachedMapping.get());
          }
 
          LOGGER.info("Cache miss for Short Code {}", shortCode);
@@ -41,7 +62,7 @@ public class UrlRedirectService {
                  .orElseThrow(()-> new ResourceNotFoundException(
                          "No URL found for short code " + shortCode
                  ));
-
+          urlMapping=validateExpiry(urlMapping);
          cacheService.cacheUrlMapping(urlMapping);
 
          LOGGER.info("Cached mapping for Short Code  {}", shortCode);

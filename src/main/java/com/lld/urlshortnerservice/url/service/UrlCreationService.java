@@ -88,7 +88,7 @@ public class UrlCreationService {
                         .shortCode(shortCode)
                         .generationStrategy(request.getGenerationStrategy())
                         .createdAt(LocalDateTime.now())
-                        .expiresAt(null)
+                        .expiresAt(request.getExpiresAt())
                         .build();
 
         //persisting the UrlMapping in repository
@@ -101,7 +101,7 @@ public class UrlCreationService {
 
         //returning the urlMapping
 
-        return urlMapping;
+        return savedMapping;
     }
 
 
