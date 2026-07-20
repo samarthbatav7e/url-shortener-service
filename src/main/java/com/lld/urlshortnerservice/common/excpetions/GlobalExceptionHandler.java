@@ -136,5 +136,22 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    @ExceptionHandler(UrlExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredUrl(
+            UrlExpiredException ex, HttpServletRequest request) {
+
+        ErrorResponse response =
+                new ErrorResponse(
+                        LocalDateTime.now(),
+                        HttpStatus.GONE.value(),
+                        ex.getMessage(),
+                        "The URL has expired.",
+                        request.getRequestURI());
+
+        return ResponseEntity
+                .status(HttpStatus.GONE)
+                .body(response);
+    }
+
 
 }
