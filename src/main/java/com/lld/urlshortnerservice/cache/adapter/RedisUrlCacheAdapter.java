@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
@@ -20,6 +21,23 @@ public class RedisUrlCacheAdapter implements UrlCacheRepository {
         this.redisTemplate=redisTemplate;
         this.ttl=Duration.ofSeconds(ttlSeconds);
     }
+
+    private  Duration calculateTTl(UrlMapping urlMapping)
+    {
+        if(urlMapping.getExpiresAt()!=null)
+        {
+            Duration TTL=Duration.between(LocalDateTime.now(), urlMapping.getExpiresAt());
+
+            if(!TTL.isNegative() && !TTL.isZero())
+            {
+                return TTL;
+            }
+            return Duration.ZERO;
+        }
+        return ttl;
+
+    }
+
     @Override
     public Optional<UrlMapping> get(String shortCode)
     {
@@ -29,9 +47,11 @@ public class RedisUrlCacheAdapter implements UrlCacheRepository {
     @Override
     public void save(UrlMapping urlMapping)
     {
+        Duration TTL=calculateTTl(urlMapping);
+
         redisTemplate.opsForValue().set(urlMapping.getShortCode(),
                 urlMapping,
-                ttl
+                TTL
         );
     }
 
