@@ -26,6 +26,12 @@ public class JpaUrlMappingRepositoryAdapter implements  UrlMappingRepository{
         return jpaRepository.save(urlMapping);
     }
     @Override
+    public void delete(UrlMapping urlMapping)
+    {
+        LOGGER.debug("Deleting expired URL Mapping {}", urlMapping.getShortCode());
+        jpaRepository.delete(urlMapping);
+    }
+    @Override
     public Optional<UrlMapping>findByLongUrl(String longUrl)
     {
         return jpaRepository.findByLongUrl(longUrl);
