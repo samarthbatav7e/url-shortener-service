@@ -3,8 +3,10 @@ package com.lld.urlshortnerservice.url.dto;
 import com.lld.urlshortnerservice.common.enums.CodeGenerationStrategy;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.cglib.core.Local;
 
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class CreateUrlRequest {
@@ -13,6 +15,9 @@ public class CreateUrlRequest {
 
     @NotNull(message = "Generation Strategy is required.")
     private CodeGenerationStrategy generationStrategy;
+
+    @FutureOrNull
+    private LocalDateTime expiresAt;
 
     public CreateUrlRequest()
     {
@@ -39,6 +44,15 @@ public class CreateUrlRequest {
     {
         this.generationStrategy=strategy;
     }
+    public LocalDateTime getExpiresAt()
+    {
+        return expiresAt;
+    }
+    public void setExpiresAt(LocalDateTime dateTime)
+    {
+        this.expiresAt=dateTime;
+    }
+
     @Override
     public boolean equals(Object o) {
 
