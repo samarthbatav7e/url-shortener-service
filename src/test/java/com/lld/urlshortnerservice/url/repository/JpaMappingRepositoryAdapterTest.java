@@ -117,4 +117,14 @@ class JpaUrlMappingRepositoryAdapterTest {
         verify(jpaRepository)
                 .existsByLongUrl(mapping.getLongUrl());
     }
+
+    @Test
+    @DisplayName("Should delete UrlMapping")
+    void shouldDeleteUrlMapping() {
+
+        adapter.delete(mapping);
+
+        verify(jpaRepository)
+                .delete(mapping);
+    }
 }
