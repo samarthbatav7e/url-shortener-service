@@ -3,6 +3,7 @@ package com.lld.urlshortnerservice.url.service;
 import com.lld.urlshortnerservice.cache.service.UrlCacheService;
 import com.lld.urlshortnerservice.common.enums.CodeGenerationStrategy;
 import com.lld.urlshortnerservice.common.excpetions.ResourceNotFoundException;
+import com.lld.urlshortnerservice.common.excpetions.UrlExpiredException;
 import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import com.lld.urlshortnerservice.url.repository.UrlMappingRepository;
 
@@ -93,6 +94,9 @@ class UrlRedirectServiceTest {
         when(repository.findByShortCode("missing"))
                 .thenReturn(Optional.empty());
 
+        when(cacheService.getCachedUrlMapping("missing"))
+                .thenReturn(Optional.empty());
+
         ResourceNotFoundException exception =
                 assertThrows(
                         ResourceNotFoundException.class,
@@ -123,9 +127,6 @@ class UrlRedirectServiceTest {
 
         verify(repository, times(1))
                 .findByShortCode("abc123");
-
-        verify(repository, times(1))
-                .findByShortCode("abc123");
     }
 
     @Test
@@ -150,6 +151,8 @@ class UrlRedirectServiceTest {
 
         when(repository.findByShortCode("abc123"))
                 .thenReturn(Optional.of(mapping));
+        when(cacheService.getCachedUrlMapping("abc123"))
+                .thenReturn(Optional.empty());
 
         UrlMapping result =
                 redirectService.resolve("abc123");
@@ -195,6 +198,9 @@ class UrlRedirectServiceTest {
         assertSame(mapping, result);
 
         verifyNoInteractions(repository);
+
+        verify(cacheService)
+                .getCachedUrlMapping("abc123");
 
         verify(cacheService, never())
                 .cacheUrlMapping(any());
@@ -251,5 +257,133 @@ class UrlRedirectServiceTest {
 
         verify(cacheService, never())
                 .cacheUrlMapping(any());
+    }
+
+    @Test
+    @DisplayName("Should evict cache, delete mapping and throw when cached URL is expired")
+    void shouldThrowWhenCachedUrlIsExpired() {
+
+        UrlMapping expired =
+                new UrlMapping.Builder()
+                        .id(1L)
+                        .longUrl("https://google.com")
+                        .shortCode("abc123")
+                        .generationStrategy(CodeGenerationStrategy.BASE62)
+                        .createdAt(LocalDateTime.now().minusDays(2))
+                        .expiresAt(LocalDateTime.now().minusMinutes(1))
+                        .build();
+
+        when(cacheService.getCachedUrlMapping("abc123"))
+                .thenReturn(Optional.of(expired));
+
+        UrlExpiredException exception =
+                assertThrows(
+                        UrlExpiredException.class,
+                        () -> redirectService.resolve("abc123")
+                );
+
+        assertEquals(
+                "Short URL " + expired.getShortCode() + " has expired.",
+                exception.getMessage());
+
+        verify(repository, never())
+                .findByShortCode(any());
+
+        verify(repository)
+                .delete(expired);
+
+        verify(cacheService)
+                .evict("abc123");
+
+        verify(cacheService, never())
+                .cacheUrlMapping(any());
+    }
+
+    @Test
+    @DisplayName("Should delete expired database mapping and throw exception")
+    void shouldThrowWhenDatabaseUrlIsExpired() {
+
+        UrlMapping expired =
+                new UrlMapping.Builder()
+                        .id(1L)
+                        .longUrl("https://google.com")
+                        .shortCode("abc123")
+                        .generationStrategy(CodeGenerationStrategy.BASE62)
+                        .createdAt(LocalDateTime.now().minusDays(2))
+                        .expiresAt(LocalDateTime.now().minusMinutes(1))
+                        .build();
+
+        when(cacheService.getCachedUrlMapping("abc123"))
+                .thenReturn(Optional.empty());
+
+        when(repository.findByShortCode("abc123"))
+                .thenReturn(Optional.of(expired));
+
+        UrlExpiredException exception =
+                assertThrows(
+                        UrlExpiredException.class,
+                        () -> redirectService.resolve("abc123")
+                );
+
+        assertEquals(
+                "Short URL " + expired.getShortCode() + " has expired.",
+                exception.getMessage());
+
+        verify(repository)
+                .findByShortCode("abc123");
+
+        verify(repository)
+                .delete(expired);
+
+        verify(cacheService)
+                .evict("abc123");
+
+        verify(cacheService, never())
+                .cacheUrlMapping(any());
+    }
+
+    @Test
+    @DisplayName("Should resolve URL when expiry is null")
+    void shouldResolveWhenExpiryIsNull() {
+
+        mapping.setExpiresAt(null);
+
+        when(cacheService.getCachedUrlMapping("abc123"))
+                .thenReturn(Optional.of(mapping));
+
+        UrlMapping result =
+                redirectService.resolve("abc123");
+
+        assertSame(mapping, result);
+
+        verify(repository, never())
+                .findByShortCode(any());
+
+        verify(repository, never())
+                .delete(any());
+
+        verify(cacheService, never())
+                .evict(any());
+    }
+
+    @Test
+    @DisplayName("Should resolve URL when expiry is in future")
+    void shouldResolveWhenExpiryIsInFuture() {
+
+        mapping.setExpiresAt(LocalDateTime.now().plusDays(1));
+
+        when(cacheService.getCachedUrlMapping("abc123"))
+                .thenReturn(Optional.of(mapping));
+
+        UrlMapping result =
+                redirectService.resolve("abc123");
+
+        assertSame(mapping, result);
+
+        verify(repository, never())
+                .delete(any());
+
+        verify(cacheService, never())
+                .evict(any());
     }
 }

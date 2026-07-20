@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -255,6 +256,7 @@ class UrlCreationServiceTest {
                 saved.getGenerationStrategy());
 
         assertNotNull(saved.getCreatedAt());
+        assertNull(saved.getExpiresAt());
     }
 
     @Test
@@ -327,5 +329,40 @@ class UrlCreationServiceTest {
 
         verify(repository, times(1))
                 .findByLongUrl(request.getLongUrl());
+    }
+    @Test
+    @DisplayName("Should save expiry date when provided")
+    void shouldSaveExpiryDate() {
+
+        LocalDateTime expiry =
+                LocalDateTime.now().plusDays(1);
+
+        request.setExpiresAt(expiry);
+
+        when(repository.findByLongUrl(any()))
+                .thenReturn(Optional.empty());
+
+        when(idGenerator.generateId())
+                .thenReturn(10L);
+
+        when(generatorFactory.getGenerator(any()))
+                .thenReturn(generator);
+
+        when(generator.generate(anyLong()))
+                .thenReturn("ABC");
+
+        when(repository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        creationService.createShortUrl(request);
+
+        ArgumentCaptor<UrlMapping> captor =
+                ArgumentCaptor.forClass(UrlMapping.class);
+
+        verify(repository).save(captor.capture());
+
+        assertEquals(
+                expiry,
+                captor.getValue().getExpiresAt());
     }
 }
