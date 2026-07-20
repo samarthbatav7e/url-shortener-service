@@ -38,7 +38,7 @@ public class UrlRedirectService {
                     "Short URL {} has expired. Removing from database and cache.",
                     urlMapping.getShortCode());
 
-            throw new UrlExpiredException("Short URL " + urlMapping.getShortCode() + "has expired.");
+            throw new UrlExpiredException("Short URL " + urlMapping.getShortCode() + " has expired.");
         }
 
         return urlMapping;
