@@ -3,6 +3,7 @@ package com.lld.urlshortnerservice.url.controller;
 import com.lld.urlshortnerservice.common.enums.CodeGenerationStrategy;
 import com.lld.urlshortnerservice.common.excpetions.GlobalExceptionHandler;
 import com.lld.urlshortnerservice.common.excpetions.ResourceNotFoundException;
+import com.lld.urlshortnerservice.common.excpetions.UrlExpiredException;
 import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import com.lld.urlshortnerservice.url.service.UrlRedirectService;
 
@@ -183,5 +184,32 @@ class RedirectControllerTest {
         mockMvc.perform(get("/spring"))
 
                 .andExpect(status().isFound());
+    }
+    @Test
+    @DisplayName("Should return HTTP 410 when short URL has expired")
+    void shouldReturn410WhenUrlHasExpired() throws Exception {
+
+        String shortCode = "expired123";
+
+        when(redirectService.resolve(shortCode))
+                .thenThrow(new UrlExpiredException(
+                        "Gone"));
+
+        mockMvc.perform(get("/" + shortCode))
+
+                .andExpect(status().isGone())
+
+                .andExpect(jsonPath("$.status").value(410))
+
+                .andExpect(jsonPath("$.error").value("Gone"))
+
+                .andExpect(jsonPath("$.message")
+                        .value("The URL has expired."))
+
+                .andExpect(jsonPath("$.path")
+                        .value("/" + shortCode));
+
+        verify(redirectService)
+                .resolve(shortCode);
     }
 }

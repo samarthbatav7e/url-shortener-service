@@ -331,4 +331,85 @@ class UrlControllerTest {
 
         verifyNoInteractions(creationService);
     }
+    @Test
+    @DisplayName("Should pass expiry date to service")
+    void shouldPassExpiryDateToService() throws Exception {
+
+        LocalDateTime expiry =
+                LocalDateTime.now().plusDays(2);
+
+        CreateUrlRequest request =
+                new CreateUrlRequest(
+                        "https://google.com",
+                        CodeGenerationStrategy.BASE62);
+
+        request.setExpiresAt(expiry);
+
+        UrlMapping mapping =
+                new UrlMapping.Builder()
+                        .id(1L)
+                        .longUrl(request.getLongUrl())
+                        .shortCode("1")
+                        .generationStrategy(CodeGenerationStrategy.BASE62)
+                        .createdAt(LocalDateTime.now())
+                        .expiresAt(expiry)
+                        .build();
+
+        CreateUrlResponse response =
+                new CreateUrlResponse(
+                        "1",
+                        "http://localhost:8080/1");
+
+        when(creationService.createShortUrl(any()))
+                .thenReturn(mapping);
+
+        when(urlMapper.toResponse(any()))
+                .thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+
+                .andExpect(status().isCreated());
+
+        ArgumentCaptor<CreateUrlRequest> captor =
+                ArgumentCaptor.forClass(CreateUrlRequest.class);
+
+        verify(creationService)
+                .createShortUrl(captor.capture());
+
+        assertEquals(
+                expiry,
+                captor.getValue().getExpiresAt());
+    }
+
+    @Test
+    @DisplayName("Should return 400 when expiry date is in the past")
+    void shouldReturn400WhenExpiryDateIsInPast() throws Exception {
+
+        CreateUrlRequest request =
+                new CreateUrlRequest(
+                        "https://google.com",
+                        CodeGenerationStrategy.BASE62);
+
+        request.setExpiresAt(
+                LocalDateTime.now().minusDays(1));
+
+        mockMvc.perform(post("/api/v1/urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+
+                .andExpect(status().isBadRequest())
+
+                .andExpect(jsonPath("$.status").value(400))
+
+                .andExpect(jsonPath("$.message")
+                        .value("Validation failed"))
+
+                .andExpect(jsonPath("$.validationErrors.expiresAt")
+                        .exists());
+
+        verifyNoInteractions(creationService);
+    }
+
 }
