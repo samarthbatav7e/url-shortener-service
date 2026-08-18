@@ -259,15 +259,6 @@ For an empty `url_mapping` table:
 INSERT INTO id_sequence (id, next_id)
 VALUES (1, 1);
 ```
-
-If existing URL mappings already use IDs `1` and `2`, initialize the
-sequence with:
-
-``` sql
-INSERT INTO id_sequence (id, next_id)
-VALUES (1, 3);
-```
-
 Initialize the sequence only once.
 
 ## Running locally
