@@ -1,17 +1,21 @@
 package com.lld.urlshortnerservice.url.mapper;
 
-import com.lld.urlshortnerservice.url.URL;
-import com.lld.urlshortnerservice.url.dto.CreateUrlRequest;
 import com.lld.urlshortnerservice.url.dto.CreateUrlResponse;
+import com.lld.urlshortnerservice.url.entity.UrlMapping;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+@Component
 public class UrlMapper {
 
-    public URL toEntity(CreateUrlRequest request)
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
+
+    public CreateUrlResponse toResponse(UrlMapping mapping)
     {
-        return null;
-    }
-    public CreateUrlResponse toResponse(URL url)
-    {
-        return null;
+        return new CreateUrlResponse(
+                mapping.getShortCode(),
+                baseUrl + "/"+mapping.getShortCode()
+        );
     }
 }
