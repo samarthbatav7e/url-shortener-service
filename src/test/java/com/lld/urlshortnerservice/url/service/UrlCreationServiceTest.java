@@ -3,6 +3,7 @@ package com.lld.urlshortnerservice.url.service;
 import com.lld.urlshortnerservice.cache.service.UrlCacheService;
 import com.lld.urlshortnerservice.common.enums.CodeGenerationStrategy;
 import com.lld.urlshortnerservice.common.idgenerator.IdGenerator;
+import com.lld.urlshortnerservice.common.util.HashUtils;
 import com.lld.urlshortnerservice.url.dto.CreateUrlRequest;
 import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import com.lld.urlshortnerservice.url.repository.UrlMappingRepository;
@@ -19,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -65,7 +67,7 @@ class UrlCreationServiceTest {
     @DisplayName("Should create new short URL")
     void shouldCreateShortUrl() {
 
-        when(repository.findByLongUrl(request.getLongUrl()))
+        when(repository.findByLongUrlHash(HashUtils.sha256Hex(request.getLongUrl())))
                 .thenReturn(Optional.empty());
 
         when(idGenerator.generateId())
@@ -123,7 +125,7 @@ class UrlCreationServiceTest {
                         .generationStrategy(CodeGenerationStrategy.BASE62)
                         .build();
 
-        when(repository.findByLongUrl(request.getLongUrl()))
+        when(repository.findByLongUrlHash(HashUtils.sha256Hex(request.getLongUrl())))
                 .thenReturn(Optional.of(existing));
 
         UrlMapping result =
@@ -214,7 +216,7 @@ class UrlCreationServiceTest {
     @DisplayName("Should save correct UrlMapping")
     void shouldSaveCorrectUrlMapping() {
 
-        when(repository.findByLongUrl(any()))
+        when(repository.findByLongUrlHash(any()))
                 .thenReturn(Optional.empty());
 
         when(idGenerator.generateId())
@@ -263,7 +265,7 @@ class UrlCreationServiceTest {
     @DisplayName("Should generate ID exactly once")
     void shouldGenerateIdOnlyOnce() {
 
-        when(repository.findByLongUrl(any()))
+        when(repository.findByLongUrlHash(any()))
                 .thenReturn(Optional.empty());
 
         when(idGenerator.generateId())
@@ -287,7 +289,7 @@ class UrlCreationServiceTest {
     @DisplayName("Should use BASE62 generator")
     void shouldUseBase62Generator() {
 
-        when(repository.findByLongUrl(any()))
+        when(repository.findByLongUrlHash(any()))
                 .thenReturn(Optional.empty());
 
         when(idGenerator.generateId())
@@ -311,7 +313,7 @@ class UrlCreationServiceTest {
     @DisplayName("Should invoke repository lookup once")
     void shouldLookupRepositoryOnlyOnce() {
 
-        when(repository.findByLongUrl(any()))
+        when(repository.findByLongUrlHash(any()))
                 .thenReturn(Optional.empty());
 
         when(idGenerator.generateId())
@@ -328,7 +330,7 @@ class UrlCreationServiceTest {
         creationService.createShortUrl(request);
 
         verify(repository, times(1))
-                .findByLongUrl(request.getLongUrl());
+                .findByLongUrlHash(HashUtils.sha256Hex(request.getLongUrl()));
     }
     @Test
     @DisplayName("Should save expiry date when provided")
@@ -339,7 +341,7 @@ class UrlCreationServiceTest {
 
         request.setExpiresAt(expiry);
 
-        when(repository.findByLongUrl(any()))
+        when(repository.findByLongUrlHash(any()))
                 .thenReturn(Optional.empty());
 
         when(idGenerator.generateId())
@@ -364,5 +366,96 @@ class UrlCreationServiceTest {
         assertEquals(
                 expiry,
                 captor.getValue().getExpiresAt());
+    }
+
+    @Test
+    @DisplayName("Should return existing mapping when a concurrent request wins the insert")
+    void shouldReturnWinnerWhenInsertLosesRace() {
+
+        String hash = HashUtils.sha256Hex(request.getLongUrl());
+
+        UrlMapping winner =
+                new UrlMapping.Builder()
+                        .id(5L)
+                        .longUrl(request.getLongUrl())
+                        .shortCode("W")
+                        .generationStrategy(CodeGenerationStrategy.BASE62)
+                        .build();
+
+        when(repository.findByLongUrlHash(hash))
+                .thenReturn(Optional.empty(), Optional.of(winner));
+
+        when(idGenerator.generateId())
+                .thenReturn(6L);
+
+        when(generatorFactory.getGenerator(any()))
+                .thenReturn(generator);
+
+        when(generator.generate(anyLong()))
+                .thenReturn("L");
+
+        when(repository.save(any(UrlMapping.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate"));
+
+        UrlMapping result =
+                creationService.createShortUrl(request);
+
+        assertSame(winner, result);
+
+        verify(repository, times(2))
+                .findByLongUrlHash(hash);
+
+        verify(cacheService, never())
+                .cacheUrlMapping(any());
+    }
+
+    @Test
+    @DisplayName("Should rethrow when insert fails and no mapping exists")
+    void shouldRethrowWhenViolationHasNoWinner() {
+
+        when(repository.findByLongUrlHash(any()))
+                .thenReturn(Optional.empty());
+
+        when(idGenerator.generateId())
+                .thenReturn(6L);
+
+        when(generatorFactory.getGenerator(any()))
+                .thenReturn(generator);
+
+        when(generator.generate(anyLong()))
+                .thenReturn("L");
+
+        when(repository.save(any(UrlMapping.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate"));
+
+        assertThrows(
+                DataIntegrityViolationException.class,
+                () -> creationService.createShortUrl(request));
+
+        verify(cacheService, never())
+                .cacheUrlMapping(any());
+    }
+
+    @Test
+    @DisplayName("Should look up existing mapping by the SHA-256 hash of the long URL")
+    void shouldLookUpByHash() {
+
+        String expectedHash = HashUtils.sha256Hex(request.getLongUrl());
+
+        UrlMapping existing =
+                new UrlMapping.Builder()
+                        .id(10L)
+                        .longUrl(request.getLongUrl())
+                        .shortCode("ABC")
+                        .generationStrategy(CodeGenerationStrategy.BASE62)
+                        .build();
+
+        when(repository.findByLongUrlHash(expectedHash))
+                .thenReturn(Optional.of(existing));
+
+        assertSame(existing, creationService.createShortUrl(request));
+
+        verify(repository).findByLongUrlHash(expectedHash);
+        verify(repository, never()).findByLongUrl(any());
     }
 }
