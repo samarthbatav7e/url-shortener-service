@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -88,6 +89,41 @@ class JpaUrlMappingRepositoryIntegrationTest {
         repository.save(createMapping());
 
         assertTrue(repository.existsByLongUrl("https://google.com"));
+    }
+
+    @Test
+    @DisplayName("Should find by long URL hash")
+    void shouldFindByLongUrlHash() {
+
+        UrlMapping saved = repository.save(createMapping());
+
+        Optional<UrlMapping> result =
+                repository.findByLongUrlHash(saved.getLongUrlHash());
+
+        assertTrue(result.isPresent());
+        assertEquals(
+                "abc123",
+                result.get().getShortCode());
+    }
+
+    @Test
+    @DisplayName("Should reject a second mapping with the same long URL")
+    void shouldRejectDuplicateLongUrl() {
+
+        repository.saveAndFlush(createMapping());
+
+        UrlMapping duplicate =
+                new UrlMapping.Builder()
+                        .id(2L)
+                        .longUrl("https://google.com")
+                        .shortCode("def456")
+                        .generationStrategy(CodeGenerationStrategy.BASE62)
+                        .createdAt(LocalDateTime.now())
+                        .build();
+
+        assertThrows(
+                DataIntegrityViolationException.class,
+                () -> repository.saveAndFlush(duplicate));
     }
 
     @Test

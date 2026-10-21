@@ -23,7 +23,12 @@ public class JpaUrlMappingRepositoryAdapter implements  UrlMappingRepository{
     public UrlMapping save(UrlMapping urlMapping)
     {
         LOGGER.debug("Saving URL Mapping {}", urlMapping.getShortCode());
-        return jpaRepository.save(urlMapping);
+        return jpaRepository.saveAndFlush(urlMapping);
+    }
+    @Override
+    public Optional<UrlMapping> findByLongUrlHash(String longUrlHash)
+    {
+            return jpaRepository.findByLongUrlHash(longUrlHash);
     }
     @Override
     public void delete(UrlMapping urlMapping)
