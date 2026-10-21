@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class Base62Generator implements ShortCodeGenerator {
 
-    private static final String BASE62="0123456789ABCDEFGHIJKLMNOPQRSTUWXYZabcdefghijklmnopqrstuvwxyz";
+    private static final String BASE62="0123456789ABCDEFGHIJKLMNOPQRSTVUWXYZabcdefghijklmnopqrstuvwxyz";
 
     @Override
     public String generate(long id)
