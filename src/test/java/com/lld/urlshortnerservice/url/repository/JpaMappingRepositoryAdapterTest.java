@@ -45,7 +45,7 @@ class JpaUrlMappingRepositoryAdapterTest {
     @DisplayName("Should save UrlMapping")
     void shouldSaveUrlMapping() {
 
-        when(jpaRepository.save(mapping))
+        when(jpaRepository.saveAndFlush(mapping))
                 .thenReturn(mapping);
 
         UrlMapping result = adapter.save(mapping);
@@ -53,7 +53,7 @@ class JpaUrlMappingRepositoryAdapterTest {
         assertSame(mapping, result);
 
         verify(jpaRepository)
-                .save(mapping);
+                .saveAndFlush(mapping);
     }
 
     @Test
@@ -72,6 +72,24 @@ class JpaUrlMappingRepositoryAdapterTest {
 
         verify(jpaRepository)
                 .findByLongUrl(mapping.getLongUrl());
+    }
+
+    @Test
+    @DisplayName("Should find by long URL hash")
+    void shouldFindByLongUrlHash() {
+
+        when(jpaRepository.findByLongUrlHash(mapping.getLongUrlHash()))
+                .thenReturn(Optional.of(mapping));
+
+        Optional<UrlMapping> result =
+                adapter.findByLongUrlHash(mapping.getLongUrlHash());
+
+        assertTrue(result.isPresent());
+
+        assertSame(mapping, result.get());
+
+        verify(jpaRepository)
+                .findByLongUrlHash(mapping.getLongUrlHash());
     }
 
     @Test

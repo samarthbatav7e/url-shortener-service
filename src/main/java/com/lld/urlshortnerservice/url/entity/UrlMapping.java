@@ -1,6 +1,7 @@
 package com.lld.urlshortnerservice.url.entity;
 
 import com.lld.urlshortnerservice.common.enums.CodeGenerationStrategy;
+import com.lld.urlshortnerservice.common.util.HashUtils;
 import com.lld.urlshortnerservice.url.strategy.generator.ShortCodeGenerator;
 import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -10,7 +11,9 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name="url_mapping")
+@Table(name="url_mapping", uniqueConstraints = @UniqueConstraint(name="uk_url_mapping_long_url_hash",
+        columnNames = "long_url_hash"))
+
 
 public class UrlMapping {
     @Id
@@ -19,6 +22,9 @@ public class UrlMapping {
 
     @Column(name="long_url", nullable = false,length=2048)
     private String longUrl;
+
+    @Column(name="long_url_hash", nullable=false,length=64)
+    private String longUrlHash;
 
     @Column(name="short_code", nullable = false, unique = true, length = 20)
     private String shortCode;
@@ -41,6 +47,7 @@ public class UrlMapping {
    {
        this.id=id;
        this.longUrl=longUrl;
+       this.longUrlHash=longUrl==null?null: HashUtils.sha256Hex(longUrl);
        this.shortCode=shortCode;
        this.generationStrategy=strategy;
        this.createdAt=createdAt;
@@ -55,6 +62,10 @@ public class UrlMapping {
    {
        return longUrl;
    }
+   public String getLongUrlHash()
+   {return longUrlHash;
+   }
+
    public String getShortCode()
    {
        return shortCode;

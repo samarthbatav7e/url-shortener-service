@@ -11,6 +11,7 @@ public interface UrlMappingRepository {
     void delete(UrlMapping urlMapping);
     Optional<UrlMapping>findByLongUrl(String longUrl);
     Optional<UrlMapping>findByShortCode(String shortCode);
+    Optional<UrlMapping> findByLongUrlHash(String longUrlHash);
     boolean existsByShortCode(String shortCode);
     boolean existsByLongUrl(String longUrl);
 

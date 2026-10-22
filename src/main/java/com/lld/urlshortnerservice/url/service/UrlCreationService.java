@@ -2,6 +2,7 @@ package com.lld.urlshortnerservice.url.service;
 
 import com.lld.urlshortnerservice.cache.service.UrlCacheService;
 import com.lld.urlshortnerservice.common.idgenerator.IdGenerator;
+import com.lld.urlshortnerservice.common.util.HashUtils;
 import com.lld.urlshortnerservice.url.dto.CreateUrlRequest;
 import com.lld.urlshortnerservice.url.entity.UrlMapping;
 import com.lld.urlshortnerservice.url.repository.UrlMappingRepository;
@@ -9,6 +10,7 @@ import com.lld.urlshortnerservice.url.strategy.factory.ShortCodeGeneratorFactory
 import com.lld.urlshortnerservice.url.strategy.generator.ShortCodeGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -54,8 +56,10 @@ public class UrlCreationService {
         //validating if a request is proper and legit as per basic standards
         validateRequest(request);
 
+        String longUrlHash= HashUtils.sha256Hex(request.getLongUrl());
+
         // checking if a URLMapping for the long URL already exists, if yes then returning it
-        Optional<UrlMapping>existingMapping=repository.findByLongUrl(request.getLongUrl());
+        Optional<UrlMapping>existingMapping=repository.findByLongUrlHash(longUrlHash);
         if(existingMapping.isPresent())
         {
             LOGGER.info("URL already exists, returning existing short code {}",
@@ -92,7 +96,15 @@ public class UrlCreationService {
                         .build();
 
         //persisting the UrlMapping in repository
-       UrlMapping savedMapping = repository.save(urlMapping);
+       UrlMapping savedMapping;
+       try{
+           savedMapping=repository.save(urlMapping);
+       }catch (DataIntegrityViolationException e)
+       {
+           //Another request stored the same long URL between our lookup and our insert
+            LOGGER.info("Concurrent creation detected, returning existing mapping");
+            return repository.findByLongUrlHash(longUrlHash).orElseThrow(()->e);
+       }
         cacheService.cacheUrlMapping(savedMapping);
 
         LOGGER.info("Cached mapping for short code {}", savedMapping.getShortCode());
